@@ -1,227 +1,183 @@
-#include <stdlib.h>
-#include <stdio.h>
+#include <glad/glad.h>
+#include "GLFW/glfw3.h"
 
-#include <SDL.h>
+#include <iostream>
 
-#include <windows.h>
-#include <gl/GL.h>
-#include <gl/glu.h>
+void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+void processInput(GLFWwindow *window);
 
-#define LARGEUR_BASE 50
-#define HAUTEUR_BASE 20
+// settings
+const unsigned int SCR_WIDTH = 800;
+const unsigned int SCR_HEIGHT = 600;
 
-#define LARGEUR_BRAS_1 150
-#define HAUTEUR_BRAS_1 15
+const char *vertexShaderSource = "#version 330 core\n"
+								 "layout (location = 0) in vec3 aPos;\n"
+								 "void main()\n"
+								 "{\n"
+								 "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+								 "}\0";
+const char *fragmentShaderSource = "#version 330 core\n"
+								   "out vec4 FragColor;\n"
+								   "void main()\n"
+								   "{\n"
+								   "   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+								   "}\n\0";
 
-#define LARGEUR_BRAS_2 50
-#define HAUTEUR_BRAS_2 10
-
-#define TAILLE_CAISSE 10
-
-#define LARGEUR_ECRAN (LARGEUR_BASE + LARGEUR_BRAS_1 + HAUTEUR_BRAS_2 + 50)
-#define HAUTEUR_ECRAN (HAUTEUR_BASE + LARGEUR_BRAS_1 + HAUTEUR_BRAS_2 + 50)
-
-int angle1 = 45;
-int angle2 = - 20;
-int longueur = 50;
-
-void drawRectangle(double largeur,double hauteur)
+int main()
 {
-	glBegin(GL_QUADS);
-	glVertex2d(0, - hauteur / 2);
-	glVertex2d(0, hauteur / 2);
-	glVertex2d(largeur, hauteur / 2);
-	glVertex2d(largeur, - hauteur / 2);
-	glEnd();
-}
+	// glfw: initialize and configure
+	// ------------------------------
+	glfwInit();
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-void drawCoordinateSystem(unsigned int echelle = 1)
-{
-	glPushMatrix();
-	glScalef(echelle, echelle, echelle);
-	glBegin(GL_LINES);
-	glColor3ub(0, 0, 255);
-	glVertex2i(0, 0);
-	glVertex2i(1, 0);
-	glColor3ub(0, 255, 0);
-	glVertex2i(0, 0);
-	glVertex2i(0, 1);
-	glEnd();
-	glPopMatrix();
-}
+#ifdef __APPLE__
+	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
 
-void draw()
-{
-	glClear(GL_COLOR_BUFFER_BIT);
-
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity( );
-
-    /* Je déplace mon répère initial (actuellement
-    en bas à gauche de l'écran) */
-    glTranslated(LARGEUR_BASE / 2,HAUTEUR_BASE, 0);
-
-	// La base
-	glColor3ub(254, 128, 1);
-	drawRectangle(LARGEUR_BASE, HAUTEUR_BASE);
-
-	//Je me place en haut au milieu de la base
-	glTranslated(LARGEUR_BASE / 2,HAUTEUR_BASE / 2, 0);
-
-	// Le grand bras
-	glRotated(angle1, 0, 0, 1);
-	glColor3ub(248, 230, 7);
-	drawRectangle(LARGEUR_BRAS_1, HAUTEUR_BRAS_1);
-
-	// Je me place au bout du grand bras
-	glTranslated(LARGEUR_BRAS_1, 0, 0);
-
-	// Puis m'occupe du petit bras
-	glRotated(angle2, 0, 0, 1);
-	glColor3ub(186, 234, 21);
-	drawRectangle(LARGEUR_BRAS_2, HAUTEUR_BRAS_2);
-
-	// Je me place au bout du petit bras
-	glTranslated(LARGEUR_BRAS_2, 0, 0);
-	/* J'annule les rotations pour avoir mon repère aligné
-	avec le repère d'origine */
-	glRotated(- angle1 - angle2, 0, 0, 1);
-
-    // Je dessine le fil
-    glColor3ub(255, 255, 255);
-    glBegin(GL_LINES);
-    glVertex2i(0, 0);
-    glVertex2i(0, - longueur);
-    glEnd();
-
-    /* Je descends en bas du fil (avec un petit décalage
-    sur X pour anticiper le dessin de la caisse */
-    glTranslated(- TAILLE_CAISSE / 2, - longueur, 0);
-
-	// Et je dessine enfin la caisse
-	glColor3ub(175, 175, 85);
-	drawRectangle(TAILLE_CAISSE, TAILLE_CAISSE);
-
-	glFlush();
-}
-
-void drawCube()
-{
-	glClear(GL_COLOR_BUFFER_BIT);
-
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity( );
-
-	gluLookAt(3, 4, 2, 0, 0, 0, 0, 0, 1);
-
-	glBegin(GL_QUADS);
-
-	glColor3ub(255, 0, 0); //face rouge
-	glVertex3d(1, 1, 1);
-	glVertex3d(1, 1, -1);
-	glVertex3d(-1, 1, -1);
-	glVertex3d(-1, 1, 1);
-
-	glColor3ub(0, 255, 0); //face verte
-	glVertex3d(1, -1, 1);
-	glVertex3d(1, -1, -1);
-	glVertex3d(1, 1, -1);
-	glVertex3d(1, 1, 1);
-
-	glColor3ub(0, 0, 255); //face bleue
-	glVertex3d(-1, -1, 1);
-	glVertex3d(-1, -1, -1);
-	glVertex3d(1, -1, -1);
-	glVertex3d(1, -1, 1);
-
-	glEnd();
-
-	glFlush();
-}
-
-int main(int argc, char *argv[])
-{
-	if(SDL_Init(SDL_INIT_VIDEO) < 0)
+	// glfw window creation
+	// --------------------
+	GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
+	if (window == NULL)
 	{
-		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "[debug] %s", SDL_GetError());
+		std::cout << "Failed to create GLFW window" << std::endl;
+		glfwTerminate();
+		return -1;
+	}
+	glfwMakeContextCurrent(window);
+	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
+	// glad: load all OpenGL function pointers
+	// ---------------------------------------
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+	{
+		std::cout << "Failed to initialize GLAD" << std::endl;
 		return -1;
 	}
 
-	auto window = SDL_CreateWindow("Window name",
-								   SDL_WINDOWPOS_UNDEFINED,
-								   SDL_WINDOWPOS_UNDEFINED,
-								   LARGEUR_ECRAN, HAUTEUR_ECRAN, SDL_WINDOW_OPENGL);
-	auto context = SDL_GL_CreateContext(window);
 
-	SDL_SetWindowTitle(window, "Exercice : une grue");
-
-	glMatrixMode( GL_PROJECTION );
-	glLoadIdentity( );
-	gluOrtho2D(0, LARGEUR_ECRAN, 0, HAUTEUR_ECRAN);
-
-	draw();
-
-	SDL_Event event;
-	while (SDL_WaitEvent(&event))
+	// build and compile our shader program
+	// ------------------------------------
+	// vertex shader
+	unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
+	glCompileShader(vertexShader);
+	// check for shader compile errors
+	int success;
+	char infoLog[512];
+	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+	if (!success)
 	{
-		switch(event.type)
-		{
-		case SDL_QUIT:
-			exit(0);
-			break;
-		case SDL_KEYDOWN:
-			switch (event.key.keysym.sym)
-			{
-			case SDLK_UP:
-				longueur --;
-				if (longueur < 10)
-					longueur = 10;
-				break;
-			case SDLK_DOWN:
-				longueur ++;
-				if (longueur > 100)
-					longueur = 100;
-				break;
-			case SDLK_LEFT:
-				if ((event.key.keysym.mod & KMOD_LSHIFT) == KMOD_LSHIFT)
-				{
-					angle1++;
-					if (angle1 > 90)
-						angle1 = 90;
-				}
-				else
-				{
-					angle2++;
-					if (angle2 > 90)
-						angle2 = 90;
-				}
-				break;
-			case SDLK_RIGHT:
-				if ((event.key.keysym.mod & KMOD_LSHIFT) == KMOD_LSHIFT)
-				{
-					angle1--;
-					if (angle1 < 10)
-						angle1 = 10;
-				}
-				else
-				{
-					angle2--;
-					if (angle2 < -90)
-						angle2 = -90;
-				}
-				break;
-			}
-			break;
-		}
+		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
+		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
+	}
+	// fragment shader
+	unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+	glCompileShader(fragmentShader);
+	// check for shader compile errors
+	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+	if (!success)
+	{
+		glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
+		std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
+	}
+	// link shaders
+	unsigned int shaderProgram = glCreateProgram();
+	glAttachShader(shaderProgram, vertexShader);
+	glAttachShader(shaderProgram, fragmentShader);
+	glLinkProgram(shaderProgram);
+	// check for linking errors
+	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+	if (!success) {
+		glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+		std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
+	}
+	glDeleteShader(vertexShader);
+	glDeleteShader(fragmentShader);
 
-		draw();
-		SDL_GL_SwapWindow(window);
+	// set up vertex data (and buffer(s)) and configure vertex attributes
+	// ------------------------------------------------------------------
+	float vertices[] = {
+		-0.5f, -0.5f, 0.0f, // left
+		0.5f, -0.5f, 0.0f, // right
+		0.0f,  0.5f, 0.0f  // top
+	};
+
+	unsigned int VBO, VAO;
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
+	// bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
+	glBindVertexArray(VAO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	// note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	// You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
+	// VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
+	glBindVertexArray(0);
+
+
+	// uncomment this call to draw in wireframe polygons.
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+	// render loop
+	// -----------
+	while (!glfwWindowShouldClose(window))
+	{
+		// input
+		// -----
+		processInput(window);
+
+		// render
+		// ------
+		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		// draw our first triangle
+		glUseProgram(shaderProgram);
+		glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+		// glBindVertexArray(0); // no need to unbind it every time
+
+		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
+		// -------------------------------------------------------------------------------
+		glfwSwapBuffers(window);
+		glfwPollEvents();
 	}
 
-	SDL_DestroyWindow(window);
+	// optional: de-allocate all resources once they've outlived their purpose:
+	// ------------------------------------------------------------------------
+	glDeleteVertexArrays(1, &VAO);
+	glDeleteBuffers(1, &VBO);
+	glDeleteProgram(shaderProgram);
 
-	SDL_Quit();
-
-
+	// glfw: terminate, clearing all previously allocated GLFW resources.
+	// ------------------------------------------------------------------
+	glfwTerminate();
 	return 0;
+}
+
+// process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
+// ---------------------------------------------------------------------------------------------------------
+void processInput(GLFWwindow *window)
+{
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+		glfwSetWindowShouldClose(window, true);
+}
+
+// glfw: whenever the window size changed (by OS or user resize) this callback function executes
+// ---------------------------------------------------------------------------------------------
+void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+{
+	// make sure the viewport matches the new window dimensions; note that width and
+	// height will be significantly larger than specified on retina displays.
+	glViewport(0, 0, width, height);
 }
