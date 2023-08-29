@@ -28,6 +28,13 @@ const char *fragmentShaderSourceYellow = "#version 330 core\n"
 								   "{\n"
 								   "   FragColor = vec4(1.0f, 1.0f, 0.0f, 1.0f);\n"
 								   "}\n\0";
+const char *fragmentShaderSourceMyColor = "#version 330 core\n"
+										  "out vec4 FragColor;\n"
+										  "uniform vec4 myColor; // we set this variable in the OpenGL code.\n"
+										  "void main()\n"
+										  "{\n"
+										  "   FragColor = myColor;\n"
+										  "}\n\0";
 
 int main()
 {
@@ -78,14 +85,18 @@ int main()
 		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
 		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
 	}
-	// fragment shader
+	// fragment shader orange
 	unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 	glShaderSource(fragmentShader, 1, &fragmentShaderSourceOrange, NULL);
 	glCompileShader(fragmentShader);
-	// fragment shader
+	// fragment shader yellow
 	unsigned int fragmentShaderYellow = glCreateShader(GL_FRAGMENT_SHADER);
 	glShaderSource(fragmentShaderYellow, 1, &fragmentShaderSourceYellow, NULL);
 	glCompileShader(fragmentShaderYellow);
+	// fragment shader yellow
+	unsigned int fragmentShaderMyColor = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(fragmentShaderMyColor, 1, &fragmentShaderSourceMyColor, NULL);
+	glCompileShader(fragmentShaderMyColor);
 	// check for shader compile errors
 	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
 	if (!success)
@@ -102,10 +113,14 @@ int main()
 	glAttachShader(shaderProgramYellow, vertexShader);
 	glAttachShader(shaderProgramYellow, fragmentShaderYellow);
 	glLinkProgram(shaderProgramYellow);
+	unsigned int shaderProgramMyColor = glCreateProgram();
+	glAttachShader(shaderProgramMyColor, vertexShader);
+	glAttachShader(shaderProgramMyColor, fragmentShaderMyColor);
+	glLinkProgram(shaderProgramMyColor);
 	// check for linking errors
-	glGetProgramiv(shaderProgramOrange, GL_LINK_STATUS, &success);
+	glGetProgramiv(shaderProgramMyColor, GL_LINK_STATUS, &success);
 	if (!success) {
-		glGetProgramInfoLog(shaderProgramOrange, 512, NULL, infoLog);
+		glGetProgramInfoLog(shaderProgramMyColor, 512, NULL, infoLog);
 		std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
 	}
 	glDeleteShader(vertexShader);
@@ -170,10 +185,16 @@ int main()
 	// uncomment this call to draw in wireframe polygons.
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
+	float timeValue;
+	float greenValue;
+	int vertexColorLocation = glGetUniformLocation(shaderProgramMyColor, "myColor");
+
 	// render loop
 	// -----------
 	while (!glfwWindowShouldClose(window))
 	{
+		timeValue = glfwGetTime();
+		greenValue = (sin(timeValue) / 2.0f) + 0.5f;
 		// input
 		// -----
 		processInput(window);
@@ -187,7 +208,9 @@ int main()
 		glUseProgram(shaderProgramOrange);
 		glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
 		glDrawArrays(GL_TRIANGLES, 0, 3);
-		glUseProgram(shaderProgramYellow);
+//		glUseProgram(shaderProgramYellow);
+		glUseProgram(shaderProgramMyColor);
+		glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
 		glBindVertexArray(VAO2); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 //		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
