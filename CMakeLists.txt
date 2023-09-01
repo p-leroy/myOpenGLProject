@@ -10,7 +10,9 @@ message("GLFW_LIBRARY " ${GLFW_LIBRARY})
 # GLAD
 include_directories("./glad/include")
 
-add_executable(myOpenGLProject)
+add_executable(myOpenGLProject
+    shader.h
+    camera.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
     main.cpp
